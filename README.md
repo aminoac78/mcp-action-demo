@@ -19,15 +19,61 @@ The GitHub Actions workflow `.github/workflows/build-release.yml` performs the f
 
 ---
 
-## Usage
+## Release Artifacts & Usage Guide
 
-### 1. Manual Trigger
-1. Go to the **Actions** tab in this repository.
+Each Release provides two pre-compiled tarball packages:
+- `onnxruntime-linux-arm64-webgpu.tar.gz` (for Linux AArch64 / ARM64)
+- `onnxruntime-android-arm64v8a-webgpu.tar.gz` (for Android ARM64-v8a)
+
+Both packages contain:
+- `include/`: ONNX Runtime session and WebGPU provider headers.
+- `lib/`: Compiled shared libraries (`.so`) and static libraries (`.a`).
+
+### 1. Using in Linux ARM64 C++ Projects
+
+1. Download and extract the Linux tarball in your project directory:
+   ```bash
+   tar -xzf onnxruntime-linux-arm64-webgpu.tar.gz -d third_party/onnxruntime
+   ```
+2. Configure your `CMakeLists.txt`:
+   ```cmake
+   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime/include)
+   link_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime/lib)
+
+   add_executable(my_app main.cpp)
+   target_link_libraries(my_app PRIVATE onnxruntime)
+   ```
+
+### 2. Using in Android ARM64-v8a Projects (NDK / JNI)
+
+1. Download and extract the Android tarball:
+   ```bash
+   tar -xzf onnxruntime-android-arm64v8a-webgpu.tar.gz -d third_party/onnxruntime-android
+   ```
+2. Place the `.so` libraries into your Android Studio project's JNI libs directory (`app/src/main/jniLibs/arm64-v8a/`).
+3. Set up include paths in your app's `CMakeLists.txt`:
+   ```cmake
+   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime-android/include)
+
+   add_library(native-lib SHARED native-lib.cpp)
+   target_link_libraries(native-lib PRIVATE 
+       android
+       log
+       ${CMAKE_CURRENT_SOURCE_DIR}/third_party/onnxruntime-android/lib/libonnxruntime.so
+   )
+   ```
+
+---
+
+## Building & Releasing
+
+### Manual Trigger
+1. Go to the **Actions** tab.
 2. Select **Build and Release ONNX Runtime WebGPU**.
 3. Click **Run workflow**.
 
-### 2. Tagged Release
-Push a git tag starting with `v` to trigger a build and publish a new release:
+### Tagged Release
+Push a git tag starting with `v` to trigger a build and publish a new release automatically:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
