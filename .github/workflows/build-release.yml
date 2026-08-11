@@ -35,8 +35,13 @@ jobs:
 
       - name: Package Artifacts
         run: |
+          mkdir -p pkg/include pkg/lib
+          cp -r onnxruntime_src/include/onnxruntime/core/session/*.h pkg/include/ 2>/dev/null || true
+          cp -r onnxruntime_src/include/onnxruntime/core/providers/webgpu/*.h pkg/include/ 2>/dev/null || true
+          find onnxruntime_src/build/Release -maxdepth 2 -name "*.so" -exec cp {} pkg/lib/ \;
+          find onnxruntime_src/build/Release -maxdepth 2 -name "*.a" -exec cp {} pkg/lib/ \;
           mkdir -p dist
-          tar -czf dist/onnxruntime-linux-arm64-webgpu.tar.gz -C onnxruntime_src/build/Release .
+          tar -czf dist/onnxruntime-linux-arm64-webgpu.tar.gz -C pkg .
 
       - name: Upload Linux ARM64 Artifact
         uses: actions/upload-artifact@v4
@@ -60,10 +65,13 @@ jobs:
         run: |
           cd onnxruntime_src
           export ANDROID_NDK_HOME=/opt/android-ndk-r29
+          export ANDROID_SDK_ROOT=/opt/android/sdk
+          mkdir -p $ANDROID_SDK_ROOT
           python3 tools/ci_build/build.py \
             --build_dir build \
             --config Release \
             --android \
+            --android_sdk_path $ANDROID_SDK_ROOT \
             --android_ndk_path $ANDROID_NDK_HOME \
             --android_abi arm64-v8a \
             --android_api 28 \
@@ -74,8 +82,13 @@ jobs:
 
       - name: Package Android Artifacts
         run: |
+          mkdir -p pkg/include pkg/lib
+          cp -r onnxruntime_src/include/onnxruntime/core/session/*.h pkg/include/ 2>/dev/null || true
+          cp -r onnxruntime_src/include/onnxruntime/core/providers/webgpu/*.h pkg/include/ 2>/dev/null || true
+          find onnxruntime_src/build/Release -maxdepth 2 -name "*.so" -exec cp {} pkg/lib/ \;
+          find onnxruntime_src/build/Release -maxdepth 2 -name "*.a" -exec cp {} pkg/lib/ \;
           mkdir -p dist
-          tar -czf dist/onnxruntime-android-arm64v8a-webgpu.tar.gz -C onnxruntime_src/build/Release .
+          tar -czf dist/onnxruntime-android-arm64v8a-webgpu.tar.gz -C pkg .
 
       - name: Upload Android ARM64v8a Artifact
         uses: actions/upload-artifact@v4
