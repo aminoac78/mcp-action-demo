@@ -26,6 +26,7 @@ jobs:
         run: |
           cd onnxruntime_src
           python3 tools/ci_build/build.py \
+            --build_dir build \
             --config Release \
             --build_shared_lib \
             --use_webgpu \
@@ -34,7 +35,7 @@ jobs:
       - name: Package Artifacts
         run: |
           mkdir -p dist
-          tar -czf dist/onnxruntime-linux-arm64-webgpu.tar.gz -C onnxruntime_src/build/Linux/Release .
+          tar -czf dist/onnxruntime-linux-arm64-webgpu.tar.gz -C onnxruntime_src/build/Release .
 
       - name: Upload Linux ARM64 Artifact
         uses: actions/upload-artifact@v4
@@ -59,6 +60,7 @@ jobs:
           cd onnxruntime_src
           export ANDROID_NDK_HOME=/opt/android-ndk-r29
           python3 tools/ci_build/build.py \
+            --build_dir build \
             --config Release \
             --android \
             --android_ndk_path $ANDROID_NDK_HOME \
@@ -70,7 +72,7 @@ jobs:
       - name: Package Android Artifacts
         run: |
           mkdir -p dist
-          tar -czf dist/onnxruntime-android-arm64v8a-webgpu.tar.gz -C onnxruntime_src/build/Android/Release .
+          tar -czf dist/onnxruntime-android-arm64v8a-webgpu.tar.gz -C onnxruntime_src/build/Release .
 
       - name: Upload Android ARM64v8a Artifact
         uses: actions/upload-artifact@v4
