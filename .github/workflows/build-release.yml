@@ -1,0 +1,111 @@
+name: Build and Release ONNX Runtime WebGPU
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python3-pip python3-dev cmake ninja-build libprotobuf-dev protobuf-compiler
+
+      - name: Clone ONNX Runtime
+        run: |
+          git clone --recursive https://github.com/microsoft/onnxruntime.git onnxruntime_src
+
+      - name: Build ONNX Runtime with WebGPU for Linux ARM64
+        run: |
+          cd onnxruntime_src
+          python3 tools/ci_build/build.py \
+            --config Release \
+            --build_shared_lib \
+            --use_webgpu \
+            --parallel $(nproc)
+
+      - name: Package Artifacts
+        run: |
+          mkdir -p dist
+          tar -czf dist/onnxruntime-linux-arm64-webgpu.tar.gz -C onnxruntime_src/build/Linux/Release .
+
+      - name: Upload Linux ARM64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-linux-arm64-webgpu
+          path: dist/onnxruntime-linux-arm64-webgpu.tar.gz
+
+  build-android-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android NDK
+        uses: android-actions/setup-ndk@v3
+        with:
+          ndk-version: '26.1.10909125'
+          local-image: false
+
+      - name: Clone ONNX Runtime
+        run: |
+          git clone --recursive https://github.com/microsoft/onnxruntime.git onnxruntime_src
+
+      - name: Build ONNX Runtime with WebGPU for Android ARM64-v8a
+        run: |
+          cd onnxruntime_src
+          python3 tools/ci_build/build.py \
+            --config Release \
+            --android \
+            --android_sdk_path $ANDROID_SDK_ROOT \
+            --android_ndk_path $ANDROID_NDK_HOME \
+            --android_abi arm64-v8a \
+            --android_api 28 \
+            --use_webgpu \
+            --parallel $(nproc)
+
+      - name: Package Android Artifacts
+        run: |
+          mkdir -p dist
+          tar -czf dist/onnxruntime-android-arm64v8a-webgpu.tar.gz -C onnxruntime_src/build/Android/Release .
+
+      - name: Upload Android ARM64v8a Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-android-arm64v8a-webgpu
+          path: dist/onnxruntime-android-arm64v8a-webgpu.tar.gz
+
+  release:
+    needs: [build-linux-arm64, build-android-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/onnxruntime-linux-arm64-webgpu/*.tar.gz
+            artifacts/onnxruntime-android-arm64v8a-webgpu/*.tar.gz
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
