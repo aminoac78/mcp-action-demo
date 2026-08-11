@@ -57,6 +57,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Install Build Tools
+        run: |
+          apt-get update && apt-get install -y ninja-build build-essential
+
       - name: Clone ONNX Runtime
         run: |
           git clone --recursive https://github.com/microsoft/onnxruntime.git onnxruntime_src
@@ -78,6 +82,7 @@ jobs:
             --use_webgpu \
             --skip_tests \
             --allow_running_as_root \
+            --cmake_generator Ninja \
             --parallel $(nproc)
 
       - name: Package Android Artifacts
