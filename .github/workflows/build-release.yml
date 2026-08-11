@@ -44,23 +44,11 @@ jobs:
 
   build-android-arm64:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/snapdragon-toolchain/arm64-android:v0.7
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Download and Setup Android NDK
-        run: |
-          ANDROID_NDK_VERSION="r26b"
-          echo "Downloading Android NDK..."
-          wget -q https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip
-          unzip -q android-ndk-${ANDROID_NDK_VERSION}-linux.zip
-          echo "ANDROID_NDK_HOME=$PWD/android-ndk-${ANDROID_NDK_VERSION}" >> $GITHUB_ENV
 
       - name: Clone ONNX Runtime
         run: |
@@ -69,6 +57,7 @@ jobs:
       - name: Build ONNX Runtime with WebGPU for Android ARM64-v8a
         run: |
           cd onnxruntime_src
+          export ANDROID_NDK_HOME=/opt/android-ndk-r29
           python3 tools/ci_build/build.py \
             --config Release \
             --android \
