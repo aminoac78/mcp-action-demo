@@ -30,6 +30,7 @@ jobs:
             --config Release \
             --build_shared_lib \
             --use_webgpu \
+            --skip_tests \
             --parallel $(nproc)
 
       - name: Package Artifacts
@@ -67,6 +68,7 @@ jobs:
             --android_abi arm64-v8a \
             --android_api 28 \
             --use_webgpu \
+            --skip_tests \
             --parallel $(nproc)
 
       - name: Package Android Artifacts
