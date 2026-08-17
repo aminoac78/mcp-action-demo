@@ -75,6 +75,7 @@ jobs:
             --build_dir build \
             --config Release \
             --android \
+            --build_shared_lib \
             --android_sdk_path $ANDROID_SDK_ROOT \
             --android_ndk_path $ANDROID_NDK_HOME \
             --android_abi arm64-v8a \
